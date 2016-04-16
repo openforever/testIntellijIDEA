@@ -85,6 +85,24 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.6.6</version>
         </dependency>
+        <!--添加MYSQL依赖，用于提供JDBC实现-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.29</version>
+            <scope>runtime</scope>
+        </dependency>
+        <!--添加两个Apache Commons依赖，提供常用的工具类-->
+        <dependency><!--Lang-->
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.3.2</version>
+        </dependency>
+        <dependency><!--Collections-->
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>4.0</version>
+        </dependency>
     </dependencies>
 
 </project>
