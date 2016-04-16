@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.smart4j.chapter2.helper.DBHelper;
 import org.smart4j.chapter2.model.Customer;
 
-import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
@@ -18,13 +17,15 @@ public class CustomerService {
 
     /*获取客户列表*/
     public List<Customer> getCustomerList(/*String keyword*/){
-        Connection conn = DBHelper.getConnection();
+       /* Connection conn = DBHelper.getConnection();
         try {
             String sql ="SELECT * FROM customer";
-            return DBHelper.queryEntityList(Customer.class, conn, sql);
+            return DBHelper.queryEntityList(Customer.class, sql);
         } finally {
-            DBHelper.closeConnection(conn);
-        }
+            DBHelper.closeConnection();每个线程只有一个conn，不是每访问一次数据库就关闭一次
+        }*/
+        String sql ="SELECT * FROM customer";
+        return DBHelper.queryEntityList(Customer.class, sql);
     }
 
     /*获取客户*/

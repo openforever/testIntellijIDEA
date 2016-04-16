@@ -20,6 +20,8 @@ import java.util.Properties;
 public class DBHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBHelper.class);
     private static final QueryRunner QUERY_RUNNER = new QueryRunner();
+    /*确保一个线程只有一个connection，使用ThreadLocal存储本地变量，确保线程安全*/
+    private static final ThreadLocal<Connection> CONNECTION_HOLDER = new ThreadLocal<>();
 
     private static final String DRIVER;
     private static final String URL;
@@ -40,39 +42,58 @@ public class DBHelper {
         }
     }
 
-    /*查询实体列表*/
-    public static <T> List<T> queryEntityList(Class<T> entityClass, Connection conn, String sql){
+    /*查询实体列表,可变参数列表，可以是0个参数*/
+    public static <T> List<T> queryEntityList(Class<T> entityClass, String sql, Object ... params){
         List<T> entityList = null;
         try {
+            Connection conn = getConnection();
             /*先执行SQL语句返回一个ResultSet，然后通过反射创建并初始化实体对象*/
-            entityList = QUERY_RUNNER.query(conn, sql, new BeanListHandler<T>(entityClass));
+            entityList = QUERY_RUNNER.query(conn, sql, new BeanListHandler<T>(entityClass), params);
         } catch (Exception e) {
             LOGGER.error("query entity list failure", e);
             throw new RuntimeException(e);
         } finally {
-            closeConnection(conn);
+            closeConnection();
         }
         return entityList;
     }
 
-    /*获取数据库连接*/
+    /*获取数据库连接, 先去ThreadLocal中查找，若不存在，则创建一个新的Connection，并将其放入ThreadLocal*/
     public static Connection getConnection(){
-        Connection conn = null;
-        try {
-            conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-        } catch (SQLException e) {
-            LOGGER.error("get connection failure", e);
+        Connection conn = CONNECTION_HOLDER.get();
+        if (conn == null){
+            try {
+                conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+            } catch (SQLException e) {
+                LOGGER.error("get connection failure", e);
+                throw new RuntimeException(e);
+            } finally {
+                CONNECTION_HOLDER.set(conn);
+            }
         }
         return conn;
     }
 
-    /*关闭数据库连接*/
-    public static void closeConnection(Connection conn){
+    /*关闭数据库连接,从ThreadLocal中移除*/
+    /*public static void closeConnection(Connection conn){
         if (conn != null){
             try {
                 conn.close();
             } catch (SQLException e) {
                 LOGGER.error("close connection failure", e);
+            }
+        }
+    }*/
+    public static void closeConnection(){
+        Connection conn = CONNECTION_HOLDER.get();
+        if (conn != null){
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                LOGGER.error("close connection failure", e);
+                throw new RuntimeException(e);
+            } finally {
+                CONNECTION_HOLDER.remove();
             }
         }
     }
