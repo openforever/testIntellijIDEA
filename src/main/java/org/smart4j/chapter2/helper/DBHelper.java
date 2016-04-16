@@ -1,6 +1,7 @@
 package org.smart4j.chapter2.helper;
 
 
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
@@ -11,7 +12,6 @@ import org.smart4j.chapter2.utils.CollectionUtil;
 import org.smart4j.chapter2.utils.PropsUtils;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,24 +27,31 @@ public class DBHelper {
     private static final QueryRunner QUERY_RUNNER = new QueryRunner();
     /*确保一个线程只有一个connection，使用ThreadLocal存储本地变量，确保线程安全*/
     private static final ThreadLocal<Connection> CONNECTION_HOLDER = new ThreadLocal<>();
+    private static final BasicDataSource DATA_SOURCE;
 
-    private static final String DRIVER;
+    /*private static final String DRIVER;
     private static final String URL;
     private static final String USERNAME;
-    private static final String PASSWORD;
+    private static final String PASSWORD;*/
 
     static {
         Properties conf = PropsUtils.loadProps("db.properties");
-        DRIVER = conf.getProperty("jdbc.driver");
-        URL = conf.getProperty("jdbc.url");
-        USERNAME = conf.getProperty("jdbc.username");
-        PASSWORD = conf.getProperty("jdbc.password");
+        String driver = conf.getProperty("jdbc.driver");
+        String url = conf.getProperty("jdbc.url");
+        String username = conf.getProperty("jdbc.username");
+        String password = conf.getProperty("jdbc.password");
 
-        try {
+        DATA_SOURCE = new BasicDataSource();
+        DATA_SOURCE.setDriverClassName(driver);
+        DATA_SOURCE.setUrl(url);
+        DATA_SOURCE.setUsername(username);
+        DATA_SOURCE.setPassword(password);
+
+        /*try {
             Class.forName(DRIVER);
         } catch (ClassNotFoundException e){
             LOGGER.error("can not load jdbc driver", e);
-        }
+        }*/
     }
 
     /*查询实体列表,可变参数列表，可以是0个参数*/
@@ -57,9 +64,9 @@ public class DBHelper {
         } catch (Exception e) {
             LOGGER.error("query entity list failure", e);
             throw new RuntimeException(e);
-        } finally {
+        }/* finally { 由数据库连接池dbcp自动管理
             closeConnection();
-        }
+        }*/
         return entityList;
     }
 
@@ -73,9 +80,9 @@ public class DBHelper {
         } catch (SQLException e) {
             LOGGER.error("query entity failure", e);
             throw new RuntimeException(e);
-        } finally {
+        }/* finally {
             closeConnection();
-        }
+        }*/
         return entity;
     }
 
@@ -160,12 +167,14 @@ public class DBHelper {
         return rows;
     }
 
-    /*获取数据库连接, 先去ThreadLocal中查找，若不存在，则创建一个新的Connection，并将其放入ThreadLocal*/
+    /*获取数据库连接, 先去ThreadLocal中查找，若不存在，则创建一个新的Connection，并将其放入ThreadLocal
+    * 频繁调用getConnetion会频繁创建数据库连接，会造成大量的系统开销*/
     public static Connection getConnection(){
         Connection conn = CONNECTION_HOLDER.get();
         if (conn == null){
             try {
-                conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                /*conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);*/
+                conn = DATA_SOURCE.getConnection();
             } catch (SQLException e) {
                 LOGGER.error("get connection failure", e);
                 throw new RuntimeException(e);
@@ -186,6 +195,7 @@ public class DBHelper {
             }
         }
     }*/
+    /*使用数据库连接池DBCP，就不需要删除连接了，由连接池自动管理,避免频繁创建，删除数据库连接，消耗太多资源
     public static void closeConnection(){
         Connection conn = CONNECTION_HOLDER.get();
         if (conn != null){
@@ -198,5 +208,5 @@ public class DBHelper {
                 CONNECTION_HOLDER.remove();
             }
         }
-    }
+    }*/
 }
