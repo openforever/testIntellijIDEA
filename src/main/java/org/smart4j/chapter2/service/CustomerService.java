@@ -22,7 +22,7 @@ public class CustomerService {
             String sql ="SELECT * FROM customer";
             return DBHelper.queryEntityList(Customer.class, sql);
         } finally {
-            DBHelper.closeConnection();每个线程只有一个conn，不是每访问一次数据库就关闭一次
+            DBHelper.closeConnection();每个线程只有一个conn, 在queryEntityList中关闭
         }*/
         String sql ="SELECT * FROM customer";
         return DBHelper.queryEntityList(Customer.class, sql);
@@ -30,25 +30,22 @@ public class CustomerService {
 
     /*获取客户*/
     public Customer getCustomer(long id){
-
-        return null;
+        String sql = "SELECT * FROM customer WHERE id = ?";
+        return DBHelper.queryEntity(Customer.class, sql, id);
     }
 
     /*创建客户*/
     public boolean createCustomer(Map<String, Object> fieldMap){
-
-        return false;
+        return DBHelper.insertEntity(Customer.class, fieldMap);
     }
 
     /*更新客户*/
     public boolean updateCustomer(long id, Map<String, Object> fieldMap){
-
-        return false;
+        return DBHelper.updateEntity(Customer.class, id, fieldMap);
     }
 
     /*删除客户*/
     public boolean deleteCustomer(long id){
-
-        return false;
+        return DBHelper.deleteEntity(Customer.class, id);
     }
 }
