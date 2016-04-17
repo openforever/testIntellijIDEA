@@ -3,9 +3,11 @@ package org.smart4j.chapter2.test;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.smart4j.chapter2.helper.DBHelper;
 import org.smart4j.chapter2.model.Customer;
 import org.smart4j.chapter2.service.CustomerService;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,9 +22,13 @@ public class CustomerServiceTest {
         customerService = new CustomerService();
     }
 
+    /*调用其他Test单元测试方法前，先调用Before方法初始化数据库
+     *Truncate Table将清空表中的所有数据(id将从1开始自增)  name是保留字
+     * */
     @Before
-    public void init(){
-        //TODO 初始化数据库
+    public void init() throws IOException {
+        String file = "sql/customer_init.sql";
+        DBHelper.executeSqlFile(file);
     }
 
     @Test

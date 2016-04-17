@@ -11,6 +11,10 @@ import org.slf4j.LoggerFactory;
 import org.smart4j.chapter2.utils.CollectionUtil;
 import org.smart4j.chapter2.utils.PropsUtils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -52,6 +56,21 @@ public class DBHelper {
         } catch (ClassNotFoundException e){
             LOGGER.error("can not load jdbc driver", e);
         }*/
+    }
+
+    /*执行SQL文件*/
+    public static void executeSqlFile(String filePath){
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filePath);
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        String sql = null;
+        try {
+            while ((sql = br.readLine()) != null){
+                executeUpdate(sql);
+            }
+        } catch (IOException e) {
+            LOGGER.error("execute sql file failure", e);
+            throw new RuntimeException(e);
+        }
     }
 
     /*查询实体列表,可变参数列表，可以是0个参数*/
@@ -155,7 +174,7 @@ public class DBHelper {
     }
 
     /*执行更新语句(update,insert,delete),返回更新影响的记录数*/
-    public static int executeUpdate(String sql, Object params){
+    public static int executeUpdate(String sql, Object ... params){
         int rows;
         try {
             Connection conn = getConnection();
